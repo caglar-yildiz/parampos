@@ -22,7 +22,3 @@ export type MakePaymentRequestType = DefaultParams & {
     securityType: string
     ipAddress: string
 }
-
-export type BinQueryParams = DefaultParams & {
-    BIN : string
-}

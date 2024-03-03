@@ -1,0 +1,4 @@
+
+/** DT */
+export interface Dt {
+}

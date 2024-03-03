@@ -1,0 +1,4 @@
+
+/** Sonuc */
+export interface Sonuc {
+}

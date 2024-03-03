@@ -1,11 +1,55 @@
 import xml2js  from 'xml2js';
 import {
-    BinQueryParams,
     BinResponse,
     HashResponse,
     ParamPaymentResponse,
     MakePaymentRequestType, TPWMDUCDResult, ITemp
 } from "./types";
+import {BinSanalPos} from "./serviceturkpos";
+
+
+export class ParamposSoap{
+    private readonly url : string;
+    constructor(url : string) {
+        this.url = url
+    }
+
+    async BIN_SanalPosAsyncImpl(queryOptions:  BinSanalPos) : Promise<[result: ITemp & {success : boolean, code : string}, rawResponse: any, soapHeader: any, rawRequest: any]>{
+
+        const body = `<?xml version="1.0" encoding="utf-8"?> <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> <soap:Body>
+        <BIN_SanalPos xmlns="https://turkpos.com.tr/">
+        <G>
+            <CLIENT_CODE>${queryOptions.G?.CLIENT_CODE}</CLIENT_CODE>
+            <CLIENT_USERNAME>${queryOptions.G?.CLIENT_USERNAME}</CLIENT_USERNAME>
+            <CLIENT_PASSWORD>${queryOptions.G?.CLIENT_CODE}</CLIENT_PASSWORD>
+        </G>
+        <BIN>${queryOptions.BIN}</BIN>
+        </BIN_SanalPos>
+        </soap:Body>
+    </soap:Envelope>`
+
+        const options: Options = createRequestOptions(body);
+        const response = await  getResponse<ITemp & {success : boolean, code : string}, BinResponse>(this.url, options , (result) => {
+            return {
+                success: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['Sonuc'] != '0',
+                code: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['Sonuc_Str'],
+                BIN: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['BIN'],
+                SanalPOS_ID: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['SanalPOS_ID'],
+                Kart_Banka: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Banka'],
+                DKK: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['DKK'],
+                Kart_Tip: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Tip'],
+                Kart_Org: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Org'],
+                Banka_Kodu: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Banka_Kodu'],
+                Kart_Ticari: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Ticari'],
+                Kart_Marka: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Marka'],
+            }
+        })
+        let rawResponse = undefined
+        let soapHeader = undefined
+        let rawRequest = undefined
+        return [response, rawResponse, soapHeader, rawRequest]
+    }
+}
 
 function createRequestOptions(body: string): Options {
     return {
@@ -124,37 +168,7 @@ export async function makePayment(url: string, paymentOptions: MakePaymentReques
     })
 }
 
-export async function queryBin(url : string, queryOptions:  BinQueryParams){
 
-    const body = `<?xml version="1.0" encoding="utf-8"?> <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> <soap:Body>
-        <BIN_SanalPos xmlns="https://turkpos.com.tr/">
-        <G>
-            <CLIENT_CODE>${queryOptions.CLIENT_CODE}</CLIENT_CODE>
-            <CLIENT_USERNAME>${queryOptions.CLIENT_USERNAME}</CLIENT_USERNAME>
-            <CLIENT_PASSWORD>${queryOptions.CLIENT_PASSWORD}</CLIENT_PASSWORD>
-        </G>
-        <BIN>${queryOptions.BIN}</BIN>
-        </BIN_SanalPos>
-        </soap:Body>
-    </soap:Envelope>`
-
-    const options: Options = createRequestOptions(body);
-    return getResponse<ITemp & {success : boolean, code : string}, BinResponse>(url, options , (result) => {
-        return {
-            success: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['Sonuc'] != '0',
-            code: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['Sonuc_Str'],
-            BIN: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['BIN'],
-            SanalPOS_ID: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['SanalPOS_ID'],
-            Kart_Banka: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Banka'],
-            DKK: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['DKK'],
-            Kart_Tip: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Tip'],
-            Kart_Org: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Org'],
-            Banka_Kodu: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Banka_Kodu'],
-            Kart_Ticari: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Ticari'],
-            Kart_Marka: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Marka'],
-        }
-    })
-}
 
 
 /**
