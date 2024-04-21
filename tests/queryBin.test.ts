@@ -4,7 +4,7 @@ import {Parampos} from "../lib/parampos"
 import {ParamposSoap} from "../lib/soap";
 
 describe('queryBin function', () => {
-    const url = 'some url';
+
     const queryParams = {
         CLIENT_CODE: "10738",
         CLIENT_USERNAME: "Test",
@@ -54,7 +54,7 @@ describe("queryBin function using client",  ()=> {
 
         const res = await client.BIN_SanalPosAsync({BIN : "6060432073705009"});
 
-        console.log(res)
+        expect(res[0].BIN_SanalPosResult?.Sonuc).toBe("1")
     })
 })
 

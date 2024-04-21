@@ -1,20 +1,20 @@
-import xml2js  from 'xml2js';
+import xml2js from 'xml2js';
 import {
     BinResponse,
-    HashResponse,
-    ParamPaymentResponse,
-    MakePaymentRequestType, TPWMDUCDResult, ITemp
+    HashResponse, ITemp
 } from "./types";
-import {BinSanalPos} from "./serviceturkpos";
+import {BinSanalPos, TpIslemOdemeWd, TpIslemOdemeWdResponse, TpWmdUcd, TpWmdUcdResponse} from "./serviceturkpos";
+import {ServiceTurkposClientImpl} from "./serviceturkpos/client";
+import {createClientAsync} from "soap";
 
 
-export class ParamposSoap{
+export class ParamposSoap implements ServiceTurkposClientImpl{
     private readonly url : string;
     constructor(url : string) {
         this.url = url
     }
 
-    async BIN_SanalPosAsyncImpl(queryOptions:  BinSanalPos) : Promise<[result: ITemp & {success : boolean, code : string}, rawResponse: any, soapHeader: any, rawRequest: any]>{
+    async BIN_SanalPosAsyncImpl(queryOptions:  BinSanalPos) : Promise<[result: ITemp , rawResponse: any, soapHeader: any, rawRequest: any]>{
 
         const body = `<?xml version="1.0" encoding="utf-8"?> <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> <soap:Body>
         <BIN_SanalPos xmlns="https://turkpos.com.tr/">
@@ -29,10 +29,8 @@ export class ParamposSoap{
     </soap:Envelope>`
 
         const options: Options = createRequestOptions(body);
-        const response = await  getResponse<ITemp & {success : boolean, code : string}, BinResponse>(this.url, options , (result) => {
+        const response = await  getResponse<ITemp, BinResponse>(this.url, options , (result) => {
             return {
-                success: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['Sonuc'] != '0',
-                code: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['Sonuc_Str'],
                 BIN: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['BIN'],
                 SanalPOS_ID: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['SanalPOS_ID'],
                 Kart_Banka: result['soap:Envelope']['soap:Body']['BIN_SanalPosResponse']['BIN_SanalPosResult']['DT_Bilgi']['diffgr:diffgram']['NewDataSet']['Temp']['Kart_Banka'],
@@ -48,6 +46,33 @@ export class ParamposSoap{
         let soapHeader = undefined
         let rawRequest = undefined
         return [response, rawResponse, soapHeader, rawRequest]
+    }
+
+    async TP_WMD_UCDAsyncImpl( paymentOptions: TpWmdUcd) : Promise<[result: TpWmdUcdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>  {
+        // we need to create hash first
+        // create hash like CLIENT_CODE & GUID & Taksit &
+        //         Islem_Tutar & Toplam_Tutar & Siparis_ID
+        let clientCode = paymentOptions.G?.CLIENT_CODE ? paymentOptions.G.CLIENT_CODE : ""
+        const securityString = clientCode + paymentOptions.GUID + paymentOptions.Taksit +
+            paymentOptions.Islem_Tutar + paymentOptions.Toplam_Tutar + paymentOptions.Siparis_ID;
+        const {hash} = await createHash(this.url, securityString)
+        console.log(this.url + "?wsdl")
+        const soapClient = await createClientAsync(this.url + "?wsdl");
+        paymentOptions.Islem_Hash = hash
+        return await soapClient.TP_WMD_UCDAsync(paymentOptions);
+    }
+
+    async TP_Islem_Odeme_WDAsyncImpl (tpIslemOdemeWd: TpIslemOdemeWd) : Promise<[result: TpIslemOdemeWdResponse, rawResponse: any, soapHeader: any, rawRequest: any]> {
+        // creating hash
+        // GUID + Islem_Tutar + Islem_Toplam + Siparis_ID +
+        let clientCode = tpIslemOdemeWd.G?.CLIENT_CODE ? tpIslemOdemeWd.G.CLIENT_CODE : ""
+        const securityString = clientCode + tpIslemOdemeWd.GUID +
+            tpIslemOdemeWd.Islem_Tutar + tpIslemOdemeWd.Toplam_Tutar + tpIslemOdemeWd.Siparis_ID +
+            tpIslemOdemeWd.Basarili_URL + tpIslemOdemeWd.Hata_URL;
+        const {hash} = await createHash(this.url, securityString);
+        tpIslemOdemeWd.Islem_Hash= hash;
+        const soapClient = await createClientAsync(this.url+ "?wsdl");
+        return await soapClient.TP_Islem_Odeme_WDAsync(tpIslemOdemeWd);
     }
 }
 
@@ -103,73 +128,6 @@ export function createHash(url: string, securityString: string) :Promise<{hash :
 }
 
 
-export async function makePayment(url: string, paymentOptions: MakePaymentRequestType)  {
-    // we need to create hash first
-    // create hash like CLIENT_CODE & GUID & Taksit &
-    //         Islem_Tutar & Toplam_Tutar & Siparis_ID
-    const securityString = paymentOptions.CLIENT_CODE + paymentOptions.GUID + paymentOptions.installment +
-        paymentOptions.price + paymentOptions.total + paymentOptions.orderId
-    const {hash} = await createHash(url, securityString)
-
-
-    const body = `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> <soap:Body>
-        <TP_WMD_UCD xmlns="https://turkpos.com.tr/">
-        <G>
-            <CLIENT_CODE>${paymentOptions.CLIENT_CODE}</CLIENT_CODE>
-            <CLIENT_USERNAME>${paymentOptions.CLIENT_USERNAME}</CLIENT_USERNAME>
-            <CLIENT_PASSWORD>${paymentOptions.CLIENT_PASSWORD}</CLIENT_PASSWORD>
-        </G>
-            <GUID>${paymentOptions.GUID}</GUID>
-            <KK_Sahibi>${paymentOptions.cardName}</KK_Sahibi>
-            <KK_No>${paymentOptions.cardNumber}</KK_No>
-            <KK_SK_Ay>${paymentOptions.cardExpMonth}</KK_SK_Ay>
-            <KK_SK_Yil>${paymentOptions.cardExpYear}</KK_SK_Yil>
-            <KK_CVC>${paymentOptions.cardCvv}</KK_CVC>
-            <KK_Sahibi_GSM>${paymentOptions.cardHolderPhone}</KK_Sahibi_GSM>
-            <Hata_URL>${paymentOptions.failUrl}</Hata_URL>
-            <Basarili_URL>${paymentOptions.successUrl}</Basarili_URL>
-            <Siparis_ID>${paymentOptions.orderId}</Siparis_ID>
-            <Siparis_Aciklama>${paymentOptions.description}</Siparis_Aciklama>
-            <Taksit>${paymentOptions.installment}</Taksit>
-            <Islem_Tutar>${paymentOptions.price}</Islem_Tutar>
-            <Toplam_Tutar>${paymentOptions.total}</Toplam_Tutar>
-            <Islem_Hash>${hash}</Islem_Hash>
-            <Islem_Guvenlik_Tip>${paymentOptions.securityType}</Islem_Guvenlik_Tip>
-            <IPAdr>${paymentOptions.ipAddress}</IPAdr>
-            <Ref_URL>${paymentOptions.successUrl}</Ref_URL>
-        <Data1>a</Data1>
-        <Data2>a</Data2>
-        <Data3>a</Data3>
-        <Data4>a</Data4>
-        <Data5>a</Data5>
-        </TP_WMD_UCD>
-        </soap:Body>
-        </soap:Envelope>`;
-    const options: Options = createRequestOptions(body);
-
-    return getResponse< TPWMDUCDResult & {success : boolean, code : string}, ParamPaymentResponse >(url, options, (result)=> {
-        const response : TPWMDUCDResult = result["soap:Envelope"]["soap:Body"].TP_WMD_UCDResponse.TP_WMD_UCDResult
-        return {
-            success : response.Sonuc  != '0',
-            code : response.Sonuc,
-            Islem_ID: response.Islem_ID,
-            UCD_HTML: response.UCD_HTML,
-            UCD_MD : response.UCD_MD,
-            Sonuc: response.Sonuc,
-            Sonuc_Str: response.Sonuc_Str,
-            Bank_Trans_ID : response.Bank_Trans_ID,
-            Bank_AuthCode : response.Bank_AuthCode,
-            Bank_HostMsg: response.Bank_HostMsg,
-            Banka_Sonuc_Kod: response.Banka_Sonuc_Kod,
-            Bank_Extra: response.Bank_Extra,
-            Siparis_ID: response.Siparis_ID,
-            Islem_GUID : response.Islem_GUID
-        }
-    })
-}
-
-
-
 
 /**
  * Returns a Promise that resolves with a result from an HTTP response after parsing an XML response.
@@ -193,6 +151,9 @@ async function getResponse<K, T>(url : string, options :  Options,  cb : (result
             }
             response.text().then((xmlResponse) => {
                 parser.parseString(xmlResponse, (err, result) => {
+                    if(err){
+                        reject(err)
+                    }
                     try {
                         const resultFin = cb(result)
                         return resolve(resultFin)

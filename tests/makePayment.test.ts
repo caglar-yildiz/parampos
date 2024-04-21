@@ -1,44 +1,51 @@
-import {makePayment} from '../lib/soap';
-import {  MakePaymentRequestType } from  "../lib/types"
-
-
+import {Parampos} from "../lib/parampos";
+import {TpWmdUcd} from "../lib/serviceturkpos";
 
 export function createUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0,
+    let r = Math.random() * 16 | 0,
         v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
 describe('makePayment function', () => {
-  const url = 'some url';
 
-  const paymentOptions: MakePaymentRequestType = {
-    CLIENT_CODE: '10738',
-    CLIENT_USERNAME: 'Test',
-    CLIENT_PASSWORD: 'Test',
+  const paymentOptions: TpWmdUcd = {
+    G : {
+      CLIENT_CODE: '10738',
+      CLIENT_USERNAME: 'Test',
+      CLIENT_PASSWORD: 'Test',
+    },
     GUID: createUUID(),
-    cardName: 'test',
-    cardNumber: '4022774022774026',
-    cardExpMonth: '12',
-    cardExpYear: "2026",
-    cardCvv: "000",
-    cardHolderPhone: '5551231212',
-    failUrl: 'https://dev.param.com.tr/tr',
-    successUrl: 'https://dev.param.com.tr/tr',
-    orderId: '1',
-    installment: '1',
-    description: 'some-description',
-    total: '100.00',
-    price: '100.00',
-    securityType: 'NS',
-    ipAddress: 'some-ip-address'
+    KK_Sahibi: 'test',
+    KK_No: '4022774022774026',
+    KK_SK_Ay: '12',
+    KK_SK_Yil: "2026",
+    KK_CVC: "000",
+    KK_Sahibi_GSM: '5551231212',
+    Hata_URL: 'https://dev.param.com.tr/tr',
+    Basarili_URL: 'https://dev.param.com.tr/tr',
+    Siparis_ID: '1',
+    Taksit: '1',
+    Siparis_Aciklama: 'some-description',
+    Toplam_Tutar: '100.00',
+    Islem_Tutar: '100.00',
+    Islem_Guvenlik_Tip: 'NS',
+    IPAdr: 'some-ip-address'
   }
 
+
   it('should properly create security string and hash', async () => {
-    const url = "https://test-dmz.param.com.tr/turkpos.ws/service_turkpos_test.asmx"
-    const res = await makePayment(url, paymentOptions)
-    console.log(res)
+    const param = new Parampos({
+      CLIENT_CODE: '10738',
+      CLIENT_USERNAME: 'Test',
+      CLIENT_PASSWORD: 'Test',
+      MODE : "test",
+    })
+    const client = await param.getClient()
+    const [result] = await client.TP_WMD_UCDAsyncImpl(paymentOptions)
+    expect(result.TP_WMD_UCDResult?.Sonuc != null)
+    console.log(result)
   })
 
 })

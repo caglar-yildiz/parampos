@@ -432,11 +432,14 @@ export interface ServiceTurkposTestClient extends SoapClient {
     MoneyPay_Islem_SorgulamaAsync(moneyPayIslemSorgulama: MoneyPayIslemSorgulama1): Promise<[result: MoneyPayIslemSorgulamaResponse1, rawResponse: any, soapHeader: any, rawRequest: any]>;
 }
 
-export interface ServiceTurkposClient extends ServiceTurkposTestClient{
-    BIN_SanalPosAsyncImpl(binSanalPos: BinSanalPos): Promise<[result: ITemp & {success : boolean, code : string}, rawResponse: any, soapHeader: any, rawRequest: any]>;
-    TP_WMD_UCDAsyncImpl(tpWmdUcd: TpWmdUcd): Promise<[result: TpWmdUcdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
-    TP_Islem_Odeme_WDImpl(tpIslemOdemeWd: TpIslemOdemeWd1): Promise<[result: TpIslemOdemeWdResponse1, rawResponse: any, soapHeader: any, rawRequest: any]>;
+export interface ServiceTurkposClient extends ServiceTurkposTestClient , ServiceTurkposClientImpl{
 
+}
+
+export interface ServiceTurkposClientImpl {
+    BIN_SanalPosAsyncImpl(binSanalPos: BinSanalPos): Promise<[result: ITemp , rawResponse: any, soapHeader: any, rawRequest: any]>;
+    TP_WMD_UCDAsyncImpl(tpWmdUcd: TpWmdUcd): Promise<[result: TpWmdUcdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
+    TP_Islem_Odeme_WDAsyncImpl(tpIslemOdemeWd: TpIslemOdemeWd): Promise<[result: TpIslemOdemeWdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
 }
 /** Create ServiceTurkposTestClient */
 export function createClientAsync(...args: Parameters<typeof soapCreateClientAsync>): Promise<ServiceTurkposClient> {

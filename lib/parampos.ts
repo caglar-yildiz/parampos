@@ -41,8 +41,15 @@ export class Parampos {
             return this.soapClient
         }
         this.soapClient = await createClientAsync(urls[this.MODE] + "?wsdl")
-        this.soapClient.BIN_SanalPosAsyncImpl = this.paramposSoap.BIN_SanalPosAsyncImpl
-
+        this.soapClient.BIN_SanalPosAsyncImpl = (input) => {
+            return  this.paramposSoap.BIN_SanalPosAsyncImpl(input)
+        }
+        this.soapClient.TP_WMD_UCDAsyncImpl = async (input) => {
+            return  this.paramposSoap.TP_WMD_UCDAsyncImpl(input)
+        }
+        this.soapClient.TP_Islem_Odeme_WDAsyncImpl = (input ) => {
+            return this.paramposSoap.TP_Islem_Odeme_WDAsyncImpl(input)
+        }
         return this.soapClient
     }
 
