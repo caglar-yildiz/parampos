@@ -1,7 +1,4 @@
-import {createHash} from './lib/soap'
+import {Parampos} from './lib/parampos'
 
-export type YandexProfile = {
-    login: string;
-}
 
-export default createHash
+export default Parampos
