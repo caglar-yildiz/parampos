@@ -11,7 +11,6 @@ export class Parampos {
     private readonly G ;
     private readonly MODE;
     private soapClient : ServiceTurkposClient | undefined;
-    public test : SafeANYINTERCAFE | undefined
     private paramposSoap : ParamposSoap ;
     constructor({
                     CLIENT_CODE,
@@ -70,14 +69,3 @@ export class Parampos {
     }
 }
 
-// Exclude the "G" property from the argument types of all methods
-type ANYINTERCAFEWithoutG<T extends ServiceTurkposClient> = {
-    [P in keyof T as P extends (...args: infer A) => any
-        ? Exclude<A, { G: any }> extends A
-            ? P
-            : never
-        : never]: T[P];
-};
-
-// Usage: Create a new interface with the filtered methods
-interface SafeANYINTERCAFE extends ANYINTERCAFEWithoutG<ServiceTurkposClient> {}
