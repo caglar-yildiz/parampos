@@ -10,12 +10,7 @@ export function createUUID() {
 }
 describe('makePayment function', () => {
 
-  const paymentOptions: TpWmdUcd = {
-    G : {
-      CLIENT_CODE: '10738',
-      CLIENT_USERNAME: 'Test',
-      CLIENT_PASSWORD: 'Test',
-    },
+  const paymentOptions = {
     GUID: createUUID(),
     KK_Sahibi: 'test',
     KK_No: '4022774022774026',
@@ -37,13 +32,16 @@ describe('makePayment function', () => {
 
   it('should properly create security string and hash', async () => {
     const param = new Parampos({
-      CLIENT_CODE: '10738',
+      CLIENT_CODE: '8',
       CLIENT_USERNAME: 'Test',
       CLIENT_PASSWORD: 'Test',
       MODE : "test",
     })
     const client = await param.getClient()
+
+
     const [result] = await client.TP_WMD_UCDAsyncImpl(paymentOptions)
+
     expect(result.TP_WMD_UCDResult?.Sonuc != null)
     console.log(result)
   })

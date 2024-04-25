@@ -15,6 +15,7 @@ test('createHash', async () => {
     let result
     try {
         //result = await createHash(url, security);
+        // @ts-ignore
         result = await client.SHA2B64Async({Data : security})
         expect(result[0].SHA2B64Result).toBe("3JA0eHXjU+Eb0SbDmhF3QM8cB2M=");
     }catch (e){
