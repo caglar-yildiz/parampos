@@ -44,7 +44,7 @@ export class Parampos {
         this.soapClient.BIN_SanalPosAsyncImpl = (input) => {
             return this.paramposSoap.BIN_SanalPosAsyncImpl({...input, G : this.G})
         }
-        this.soapClient.TP_WMD_UCDAsyncImpl = async (input : Omit<TpWmdUcd, "G"> ) => {
+        this.soapClient.TP_WMD_UCDAsyncImpl = async (input ) => {
             return this.paramposSoap.TP_WMD_UCDAsyncImpl(input)
         }
         this.soapClient.TP_Islem_Odeme_WDAsyncImpl = (input ) => {

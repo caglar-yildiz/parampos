@@ -438,8 +438,8 @@ export interface ServiceTurkposClient extends ServiceTurkposTestClient , Service
 
 export interface ServiceTurkposClientImpl {
     BIN_SanalPosAsyncImpl(binSanalPos: BinSanalPos): Promise<[result: ITemp , rawResponse: any, soapHeader: any, rawRequest: any]>;
-    TP_WMD_UCDAsyncImpl(tpWmdUcd: TpWmdUcd): Promise<[result: TpWmdUcdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
-    TP_Islem_Odeme_WDAsyncImpl(tpIslemOdemeWd: TpIslemOdemeWd): Promise<[result: TpIslemOdemeWdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
+    TP_WMD_UCDAsyncImpl(tpWmdUcd: Omit<TpWmdUcd,"Islem_Hash">): Promise<[result: TpWmdUcdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
+    TP_Islem_Odeme_WDAsyncImpl(tpIslemOdemeWd:  Omit<TpIslemOdemeWd,"Islem_Hash">): Promise<[result: TpIslemOdemeWdResponse, rawResponse: any, soapHeader: any, rawRequest: any]>;
 }
 /** Create ServiceTurkposTestClient */
 export function createClientAsync(...args: Parameters<typeof soapCreateClientAsync>): Promise<ServiceTurkposClient> {
